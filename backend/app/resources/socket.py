@@ -5,7 +5,7 @@ from .. import socketio
 socket = Blueprint('socket', __name__)
 
 @socketio.on('join_room')
-def join_room(data):
+def handle_join_room(data):
     room = data['roomName']
     join_room(room)
 
@@ -15,7 +15,7 @@ def join_room(data):
     return
 
 @socketio.on('leave_room')
-def leave_room(data):
+def handle_leave_room(data):
     room = data['roomName']
     username = data['username']
     leave_room(room)
@@ -23,8 +23,8 @@ def leave_room(data):
     response_to_client = { 'left': True }
     response_to_room = { 'leaver': username }
 
-    emit('recieve_message', response_to_room, to=room)
-    emit('leave_room', response_to_client, to=room)
+    emit('receive_message', response_to_room, to=room)
+    emit('leave_room', response_to_client)
     return
 
 
@@ -32,5 +32,4 @@ def leave_room(data):
 def send_message(data):
     room = data['roomName']
 
-    emit('recieve_message', data, to=room)
-
+    emit('receive_message', data, to=room)
