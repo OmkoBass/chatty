@@ -1,5 +1,6 @@
 <script>
   import Button from "./Button.svelte";
+  import InputField from "./InputField.svelte";
 
   import { createEventDispatcher } from "svelte";
 
@@ -15,35 +16,46 @@
   function handleSendMessage() {
     dispatch("sendChatMessage", {
       username,
-      room: roomName,
+      roomName,
       message,
     });
     message = "";
   }
 </script>
 
-<div class="flex flex-col justify-center w-full">
-  <h4 class="text-center my-4 font-bold">You are {username}</h4>
-  <h4 class="text-center font-bold">Room: {roomName}</h4>
+<div class="flex flex-col justify-between">
+  <h4
+    class="font-extrabold text-4xl text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-blue-600"
+  >
+    Room: {roomName}
+  </h4>
 
-  {#each messages as message}
-    <h4 class="my-2">
-      <span class="font-bold">{message.username}:</span>{message.message}
-    </h4>
-  {/each}
-
-  <div>
-    <input
-      class="my-4"
-      type="text w-full"
-      placeholder="I never lose"
-      bind:value={message}
-    />
+  <div class="flex-grow">
+    {#each messages as message}
+      <section class="mb-2">
+        <h4
+          class="{message.username === username
+            ? 'text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-orange-500'
+            : 'text-gray-300'} font-extrabold"
+        >
+          {message.username}
+        </h4>
+        <p class="text-gray-300">{message.message}</p>
+      </section>
+    {/each}
   </div>
 
-  <Button
-    isDisabled={isLoading}
-    buttonText={(isLoading && "Loading...") || "Send"}
-    buttonHandler={handleSendMessage}
-  />
+  <div class="grid gap-6 mb-6">
+    <InputField
+      bind:value={message}
+      placeholder="Say something interesting"
+      id={"message_input"}
+    />
+
+    <Button
+      isDisabled={isLoading}
+      buttonText={(isLoading && "Loading...") || "Send"}
+      buttonHandler={handleSendMessage}
+    />
+  </div>
 </div>
