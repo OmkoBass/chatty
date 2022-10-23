@@ -4,5 +4,5 @@ export enum socketActions {
   joinRoom = "join_room",
   leaveRoom = "leave_room",
   sendMessage = "send_message",
-  recieveMessage = "recieve_message",
+  receiveMessage = "receive_message",
 }
