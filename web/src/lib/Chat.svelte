@@ -3,6 +3,7 @@
   import InputField from "./InputField.svelte";
 
   import { createEventDispatcher } from "svelte";
+  import { validationMessages } from "../utils/constants";
 
   export let username;
   export let roomName;
@@ -11,15 +12,51 @@
 
   let message = "";
 
+  let isFormValid = false;
+  let validationErrors = {
+    message: '',
+  }
+
+  let dirtyFields = {
+    message: false
+  }
+
+  $: {
+    if(message === '' && dirtyFields.message) {
+      validationErrors.message = validationMessages.required;
+    } else {
+      validationErrors.message = '';
+    }
+
+    isFormValid = Object.values(validationErrors).every((value) => value === '');
+  }
+
+  $: fieldsUntouched = Object.values(dirtyFields).some((value) => value === false);
+
   const dispatch = createEventDispatcher();
 
   function handleSendMessage() {
-    dispatch("sendChatMessage", {
+    if(fieldsUntouched) {
+      Object.keys(dirtyFields).forEach((key) => {
+        dirtyFields[key] = true;
+      });
+      return
+    }
+
+    if (!isFormValid) {
+      return
+    }
+
+    const messagePayload = {
       username,
       roomName,
-      message,
-    });
+      message
+    }
+
+    dispatch("sendChatMessage", messagePayload);
+
     message = "";
+    dirtyFields.message = false;
   }
 </script>
 
@@ -49,6 +86,8 @@
     <InputField
       bind:value={message}
       placeholder="Say something interesting"
+      error="{validationErrors.message}"
+      on:becomeDirty={() => dirtyFields.message = true}
       id={"message_input"}
     />
 

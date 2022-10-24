@@ -3,6 +3,7 @@
   import { io } from "socket.io-client";
 
   import { joinRoom, leaveRoom, sendMessage } from "./utils/socketFunctions";
+  import { validationMessages } from "./utils/constants";
   import { socketActions } from "./enums";
 
   import Header from "./lib/Header.svelte";
@@ -31,7 +32,62 @@
   let messages = [];
   let isLoading = false;
 
-  const handleJoinRoom = () => joinRoom(socket, { username, roomName });
+  let isFormValid = false;
+  let validationErrors = {
+    username: '',
+    roomName: '',
+  }
+
+  let dirtyFields = {
+    username: false,
+    roomName: false,
+  }
+
+  onMount(() => {
+    socket.connect();
+  });
+
+  $: {
+    if(username === '' && dirtyFields.username) {
+        validationErrors.username = validationMessages.required;
+    }
+    else {
+        validationErrors.username = '';
+    }
+
+    if (roomName === '' && dirtyFields.roomName) {
+        validationErrors.roomName = validationMessages.required;
+    }
+    else {
+        validationErrors.roomName = '';
+    }
+
+    isFormValid = Object.values(validationErrors).every((value) => value === '');
+  }
+
+  $: fieldsUntouched = Object.values(dirtyFields).some((value) => value === false);
+
+  const handleJoinRoom = () => {
+    if(fieldsUntouched) {
+      Object.keys(dirtyFields).forEach((key) => {
+          dirtyFields[key] = true;
+      });
+
+      return
+    }
+
+
+    if (!isFormValid) {
+      return
+    }
+
+    const chatAction = {
+      username,
+      roomName,
+    };
+
+    joinRoom(socket, chatAction)
+  };
 
   const handleLeaveRoom = () => leaveRoom(socket, { username, roomName });
 
@@ -43,10 +99,6 @@
     sendMessage(socket, message);
     isLoading = false;
   };
-
-  onMount(() => {
-    socket.connect();
-  });
 
   socket.on(socketActions.joinRoom, (message) => {
     if (message.joined) {
@@ -106,6 +158,8 @@
           label="Username"
           placeholder="Someone"
           disabled={isJoinedRoom}
+          error="{validationErrors.username}"
+          on:becomeDirty={() => dirtyFields.username = true}
           id="username"
         />
 
@@ -114,6 +168,8 @@
           label="Room Name"
           placeholder="SomeRoom45"
           disabled={isJoinedRoom}
+          error="{validationErrors.roomName}"
+          on:becomeDirty={() => dirtyFields.roomName = true}
           id={"room_name"}
         />
 
