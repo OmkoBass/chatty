@@ -34,51 +34,52 @@
 
   let isFormValid = false;
   let validationErrors = {
-    username: '',
-    roomName: '',
-  }
+    username: "",
+    roomName: "",
+  };
 
   let dirtyFields = {
     username: false,
     roomName: false,
-  }
+  };
 
   onMount(() => {
     socket.connect();
   });
 
   $: {
-    if(username === '' && dirtyFields.username) {
-        validationErrors.username = validationMessages.required;
-    }
-    else {
-        validationErrors.username = '';
-    }
-
-    if (roomName === '' && dirtyFields.roomName) {
-        validationErrors.roomName = validationMessages.required;
-    }
-    else {
-        validationErrors.roomName = '';
+    if (username === "" && dirtyFields.username) {
+      validationErrors.username = validationMessages.required;
+    } else {
+      validationErrors.username = "";
     }
 
-    isFormValid = Object.values(validationErrors).every((value) => value === '');
+    if (roomName === "" && dirtyFields.roomName) {
+      validationErrors.roomName = validationMessages.required;
+    } else {
+      validationErrors.roomName = "";
+    }
+
+    isFormValid = Object.values(validationErrors).every(
+      (value) => value === ""
+    );
   }
 
-  $: fieldsUntouched = Object.values(dirtyFields).some((value) => value === false);
+  $: fieldsUntouched = Object.values(dirtyFields).some(
+    (value) => value === false
+  );
 
   const handleJoinRoom = () => {
-    if(fieldsUntouched) {
+    if (fieldsUntouched) {
       Object.keys(dirtyFields).forEach((key) => {
-          dirtyFields[key] = true;
+        dirtyFields[key] = true;
       });
 
-      return
+      return;
     }
 
-
     if (!isFormValid) {
-      return
+      return;
     }
 
     const chatAction = {
@@ -86,7 +87,7 @@
       roomName,
     };
 
-    joinRoom(socket, chatAction)
+    joinRoom(socket, chatAction);
   };
 
   const handleLeaveRoom = () => leaveRoom(socket, { username, roomName });
@@ -136,42 +137,46 @@
 </script>
 
 <main
-  class="flex flex-col justify-start h-screen bg-gradient-to-r from-black to-gray-800"
+  class="flex flex-col min-h-screen h-full bg-gradient-to-r from-black to-gray-800"
 >
   <Header />
   <div
-    class="flex-1 flex flex-col justify-between max-w-screen-xl w-full mx-auto p-4"
+    class="flex-1 flex flex-col justify-between max-w-screen-xl w-full h-full mx-auto p-4"
   >
     {#if socketError}
-      <h1 class="text-5xl font-bold text-red-700 text-center">
-        {socketError.title}
-      </h1>
-      <pre class="text-red-500">{JSON.stringify(
-          socketError.message,
-          null,
-          4
-        )}</pre>
+      <div>
+        <h1 class="text-5xl font-bold text-red-700 text-center">
+          {socketError.title}
+        </h1>
+        <pre class="text-red-500">{JSON.stringify(
+            socketError.message,
+            null,
+            4
+          )}</pre>
+      </div>
     {:else}
-      <div class="grid gap-6 mb-2">
-        <InputField
-          bind:value={username}
-          label="Username"
-          placeholder="Someone"
-          disabled={isJoinedRoom}
-          error="{validationErrors.username}"
-          on:becomeDirty={() => dirtyFields.username = true}
-          id="username"
-        />
+      <div class="flex flex-col gap-4 mb-2">
+        {#if !isJoinedRoom}
+          <InputField
+            bind:value={username}
+            label="Username"
+            placeholder="Someone"
+            disabled={isJoinedRoom}
+            error={validationErrors.username}
+            on:becomeDirty={() => (dirtyFields.username = true)}
+            id="username"
+          />
 
-        <InputField
-          bind:value={roomName}
-          label="Room Name"
-          placeholder="SomeRoom45"
-          disabled={isJoinedRoom}
-          error="{validationErrors.roomName}"
-          on:becomeDirty={() => dirtyFields.roomName = true}
-          id={"room_name"}
-        />
+          <InputField
+            bind:value={roomName}
+            label="Room Name"
+            placeholder="SomeRoom45"
+            disabled={isJoinedRoom}
+            error={validationErrors.roomName}
+            on:becomeDirty={() => (dirtyFields.roomName = true)}
+            id={"room_name"}
+          />
+        {/if}
 
         <Button
           buttonText={isJoinedRoom ? "Leave" : "Join"}
@@ -180,15 +185,13 @@
       </div>
 
       {#if isJoinedRoom}
-        <div class="flex-1">
-          <Chat
-            {username}
-            {roomName}
-            {messages}
-            {isLoading}
-            on:sendChatMessage={handleSendMessage}
-          />
-        </div>
+        <Chat
+          {username}
+          {roomName}
+          {messages}
+          {isLoading}
+          on:sendChatMessage={handleSendMessage}
+        />
       {/if}
     {/if}
   </div>

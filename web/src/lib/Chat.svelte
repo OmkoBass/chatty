@@ -10,48 +10,58 @@
   export let messages;
   export let isLoading;
 
+  let chatRef;
+
   let message = "";
 
   let isFormValid = false;
   let validationErrors = {
-    message: '',
-  }
+    message: "",
+  };
 
   let dirtyFields = {
-    message: false
-  }
+    message: false,
+  };
 
   $: {
-    if(message === '' && dirtyFields.message) {
+    if (message === "" && dirtyFields.message) {
       validationErrors.message = validationMessages.required;
     } else {
-      validationErrors.message = '';
+      validationErrors.message = "";
     }
 
-    isFormValid = Object.values(validationErrors).every((value) => value === '');
+    isFormValid = Object.values(validationErrors).every(
+      (value) => value === ""
+    );
   }
 
-  $: fieldsUntouched = Object.values(dirtyFields).some((value) => value === false);
+  $: fieldsUntouched = Object.values(dirtyFields).some(
+    (value) => value === false
+  );
+
+  $: if (messages && chatRef) {
+    chatRef.scroll({ top: chatRef.scrollHeight, behavior: "smooth" });
+  }
 
   const dispatch = createEventDispatcher();
 
   function handleSendMessage() {
-    if(fieldsUntouched) {
+    if (fieldsUntouched && !message) {
       Object.keys(dirtyFields).forEach((key) => {
         dirtyFields[key] = true;
       });
-      return
+      return;
     }
 
     if (!isFormValid) {
-      return
+      return;
     }
 
     const messagePayload = {
       username,
       roomName,
-      message
-    }
+      message,
+    };
 
     dispatch("sendChatMessage", messagePayload);
 
@@ -60,34 +70,35 @@
   }
 </script>
 
-<div class="flex flex-col justify-between">
+<div class="flex-1 flex-grow flex flex-col h-full">
   <h4
     class="font-extrabold text-4xl text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-blue-600"
   >
     Room: {roomName}
   </h4>
-
-  <div class="flex-grow">
-    {#each messages as message}
-      <section class="mb-2">
-        <h4
-          class="{message.username === username
-            ? 'text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-orange-500'
-            : 'text-gray-300'} font-extrabold"
-        >
-          {message.username}
-        </h4>
-        <p class="text-gray-300">{message.message}</p>
-      </section>
-    {/each}
+  <div bind:this={chatRef} class="flex-grow overflow-y-auto">
+    <div class="max-h-64">
+      {#each messages as message}
+        <section class="mb-2">
+          <h4
+            class="{message.username === username
+              ? 'text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-orange-500'
+              : 'text-gray-300'} font-extrabold"
+          >
+            {message.username}
+          </h4>
+          <p class="text-gray-300">{message.message}</p>
+        </section>
+      {/each}
+    </div>
   </div>
 
-  <div class="grid gap-6 mb-6">
+  <div class="flex flex-col gap-4 mb-6 flex-0">
     <InputField
       bind:value={message}
       placeholder="Say something interesting"
-      error="{validationErrors.message}"
-      on:becomeDirty={() => dirtyFields.message = true}
+      error={validationErrors.message}
+      on:becomeDirty={() => (dirtyFields.message = true)}
       id={"message_input"}
     />
 
