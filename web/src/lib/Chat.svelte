@@ -40,10 +40,20 @@
   );
 
   $: if (messages && chatRef) {
+    const chatElementSize = 56
     // Add a timeout to allow the DOM to update
     setTimeout(() => {
-      chatRef.scroll({ top: chatRef.scrollHeight, behavior: "smooth" });
+        const isAtBottom = chatRef.scrollTop === (chatRef.scrollHeight - chatRef.offsetHeight - chatElementSize);
+
+        // If the user is at the bottom of the chat, scroll to the bottom
+        if (isAtBottom) {
+          scrollToBottom()
+        }
     }, 1)
+  }
+
+  function scrollToBottom() {
+    chatRef.scroll({ top: chatRef.scrollHeight, behavior: "smooth" });
   }
 
   const dispatch = createEventDispatcher();
