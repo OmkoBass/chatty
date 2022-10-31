@@ -1,4 +1,6 @@
 <script lang="ts">
+  // FOR SOME REASON I CANNOT IMPORT TYPES, I GET AN ERROR 500 FROM SVELTE
+  // NEXT.JS Is the best
   import { onMount } from "svelte";
   import { io } from "socket.io-client";
 
@@ -10,11 +12,17 @@
   import Button from "./lib/Button.svelte";
   import Chat from "./lib/Chat.svelte";
   import InputField from "./lib/InputField.svelte";
+  import Error from "./lib/Error.svelte";
 
   const socket = io("http://localhost:5000");
 
-  let socketError = null;
+  // These are all the errors that can trigger and be displayed to the user
+  // I would group these up in an error object but typescript is being a pain
+  let socketError = null
+  let joinRoomError = null
+  let messageError = null
 
+  // On connection error display error
   socket.on(socketActions.connectionError, (e) => {
     socketError = {
       title: "Connection error",
@@ -22,6 +30,7 @@
     };
   });
 
+  // On connection success let the user through
   socket.on(socketActions.connect, () => {
     socketError = null;
   });
@@ -43,10 +52,13 @@
     roomName: false,
   };
 
+  // Connect to the socket when the component mounts
   onMount(() => {
     socket.connect();
   });
 
+  // This is a computed property that will run when the username or roomName changes.
+  // It will validate the fields and set the errors and isFormValid
   $: {
     if (username === "" && dirtyFields.username) {
       validationErrors.username = validationMessages.required;
@@ -65,6 +77,7 @@
     );
   }
 
+  // This is a computed property that will be true or false depending on the dirty fields
   $: fieldsUntouched = Object.values(dirtyFields).some(
     (value) => value === false
   );
@@ -102,8 +115,15 @@
   };
 
   socket.on(socketActions.joinRoom, (message) => {
-    if (message.joined) {
+    console.log(message)
+    if(message.errors) {
+      joinRoomError = message.errors
+      return
+    }
+
+    if (message.joined === true) {
       isJoinedRoom = true;
+      joinRoomError = null
     }
   });
 
@@ -111,6 +131,13 @@
     if (message.left) {
       messages = [];
       isJoinedRoom = false;
+    }
+  });
+
+  socket.on(socketActions.sendMessage, (message) => {
+    if(message.error) {
+      messageError = message.error
+      return
     }
   });
 
@@ -133,6 +160,7 @@
     };
 
     messages = [...messages, leaveMessage];
+    messageError = null
   });
 </script>
 
@@ -144,17 +172,9 @@
     class="flex-1 flex flex-col justify-between max-w-screen-xl w-full h-full mx-auto p-4"
   >
     {#if socketError}
-      <div>
-        <h1 class="text-5xl font-bold text-red-700 text-center">
-          {socketError.title}
-        </h1>
-        <pre class="text-red-500">{JSON.stringify(
-            socketError.message,
-            null,
-            4
-          )}</pre>
-      </div>
-    {:else}
+      <Error errorMessage={socketError} isVisible={!!socketError} />
+    {/if}
+    {#if !socketError}
       <div class="flex flex-col gap-4 mb-2">
         {#if !isJoinedRoom}
           <InputField
@@ -182,9 +202,12 @@
           buttonText={isJoinedRoom ? "Leave" : "Join"}
           buttonHandler={isJoinedRoom ? handleLeaveRoom : handleJoinRoom}
         />
+
+        <Error errorMessage={joinRoomError} isVisible={!!joinRoomError} />
       </div>
 
       {#if isJoinedRoom}
+        <Error errorMessage={messageError} isVisible={!!messageError} />
         <Chat
           {username}
           {roomName}
