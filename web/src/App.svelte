@@ -115,7 +115,6 @@
   };
 
   socket.on(socketActions.joinRoom, (message) => {
-    console.log(message)
     if(message.errors) {
       joinRoomError = message.errors
       return
