@@ -14,6 +14,10 @@
 
   const dispatch = createEventDispatcher()
 
+  function handleKeyPress(e) {
+    dispatch("keypress", e.key)
+  }
+
   function handleBecomeDirty() {
     if (isDirty) {
       return
@@ -39,6 +43,7 @@
     {disabled}
     bind:value
     on:input={handleBecomeDirty}
+    on:keypress={(e) => handleKeyPress(e)}
   />
   <p class="text-red-500">{error}</p>
 </div>
