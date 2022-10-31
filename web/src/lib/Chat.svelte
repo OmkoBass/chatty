@@ -40,7 +40,10 @@
   );
 
   $: if (messages && chatRef) {
-    chatRef.scroll({ top: chatRef.scrollHeight, behavior: "smooth" });
+    // Add a timeout to allow the DOM to update
+    setTimeout(() => {
+      chatRef.scroll({ top: chatRef.scrollHeight, behavior: "smooth" });
+    }, 1)
   }
 
   const dispatch = createEventDispatcher();
@@ -100,6 +103,13 @@
       error={validationErrors.message}
       on:becomeDirty={() => (dirtyFields.message = true)}
       id={"message_input"}
+      on:keypress={(e) => {
+        const key = e.detail;
+
+        if (key === "Enter") {
+          handleSendMessage();
+        }
+      }}
     />
 
     <Button
